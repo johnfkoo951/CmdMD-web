@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CmdMD</title>
+    <meta name="description" content="A review-first Markdown editor and Obsidian vault router for macOS. Read beautifully, then route to the right vault folder — one keystroke each.">
+    <link rel="icon" type="image/png" href="/assets/logos/cmds-logo-round.png">
+    <link rel="apple-touch-icon" href="/assets/logos/cmds-logo-round.png">
+
+    <!-- Open Graph (1200×630 dedicated OG image) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="CMDSPACE">
+    <meta property="og:title" content="CmdMD">
+    <meta property="og:description" content="A review-first Markdown editor and Obsidian vault router for macOS. Read beautifully, then route to the right vault folder — one keystroke each.">
+    <meta property="og:url" content="https://cmdmd.cmdspace.work">
+    <meta property="og:image" content="https://cmdmd.cmdspace.work/assets/og/og-cmdmd-web.png">
+    <meta property="og:image:secure_url" content="https://cmdmd.cmdspace.work/assets/og/og-cmdmd-web.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="CmdMD">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:locale:alternate" content="ko_KR">
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CmdMD">
+    <meta name="twitter:description" content="A review-first Markdown editor and Obsidian vault router for macOS. Read beautifully, then route to the right vault folder — one keystroke each.">
+    <meta name="twitter:image" content="https://cmdmd.cmdspace.work/assets/og/og-cmdmd-web.png">
+    <meta name="twitter:image:alt" content="CmdMD">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+    <style>
+        /* ═══════════════ TOKENS — Apple × CMDS Green ═══════════════ */
+        :root {
+            --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Pretendard', 'Helvetica Neue', Arial, sans-serif;
+            --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Pretendard', 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, 'SF Mono', 'Menlo', 'Monaco', Consolas, monospace;
+
+            --cmds-green: #134538;
+            --cmds-green-hover: #1a5d4b;
+            --cmds-green-bright: #22896a;
+            --cmds-green-glow: #2fb488;
+            --cmds-green-50: #f1f7f4;
+            --cmds-green-100: #dcebe3;
+            --cmds-green-200: #bad9c9;
+            --cmds-pink: #E985A2;
+            --cmds-pink-light: #F4A4B8;
+            --cmds-pink-dark: #D16C8A;
+            --cmds-pink-soft: #2b1922;
+
+            --bg: #fbfbfa;
+            --bg-elev: #ffffff;
+            --bg-subtle: #f5f6f4;
+            --fg: #0a0d0b;
+            --fg-muted: #4a544f;
+            --fg-subtle: #8a938e;
+            --border: #e6e8e6;
+            --border-strong: #d0d3d0;
+            --accent: var(--cmds-green);
+            --accent-soft: var(--cmds-green-50);
+
+            --section-px: clamp(24px, 5vw, 80px);
+            --header-h: 56px;
+            --max-w: 1200px;
+        }
+
+        [data-theme="dark"] {
+            --bg: #06080a;
+            --bg-elev: #0d1411;
+            --bg-subtle: #0a1110;
+            --fg: #f2f4f3;
+            --fg-muted: #9aa39d;
+            --fg-subtle: #626a66;
+            --border: #1a231f;
+            --border-strong: #26302a;
+            /* Dark mode highlight: CMDS Pink #E985A2 */
+            --accent: #E985A2;
+            --accent-soft: #2b1922;
+            --accent-strong: #F4A4B8;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.55;
+            letter-spacing: -0.011em;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-feature-settings: 'kern', 'liga', 'calt', 'ss01';
+            text-rendering: optimizeLegibility;
+            overflow-x: hidden;
+        }
+        a { color: var(--accent); text-decoration: none; transition: opacity .15s ease; }
+        a:hover { opacity: 0.7; }
+        code { font-family: var(--font-mono); font-size: 0.9em; }
+
+        [data-lang="en"] .ko-only { display: none; }
+        [data-lang="ko"] .en-only { display: none; }
+
+        /* Accent word — themed highlight inside headlines (light=green, dark=pink) */
+        .accent-word { color: var(--cmds-green); }
+        [data-theme="dark"] .accent-word { color: var(--cmds-pink); }
+
+        /* ═══════════════ HEADER ═══════════════ */
+        .site-header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            height: var(--header-h);
+            background: color-mix(in srgb, var(--bg) 72%, transparent);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+            display: flex; align-items: center;
+            padding: 0 clamp(16px, 3vw, 32px);
+            gap: 24px;
+        }
+        .brand {
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 600; font-size: 15px;
+            color: var(--fg);
+            letter-spacing: -0.018em;
+        }
+        .brand-mark {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            object-fit: contain;
+            display: block;
+            flex-shrink: 0;
+            /* Round CMDS logo has transparent parts → no background needed */
+        }
+        /* Dark mode: round logo is designed black+white, works on both */
+
+        .header-nav {
+            display: flex; gap: 4px;
+            margin-left: auto;
+        }
+        .header-nav a {
+            padding: 7px 14px;
+            color: var(--fg-muted);
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            letter-spacing: -0.008em;
+            transition: background .15s ease, color .15s ease;
+        }
+        .header-nav a:hover { background: var(--bg-subtle); color: var(--fg); opacity: 1; }
+        .header-nav a.primary {
+            background: var(--cmds-green);
+            color: #fff;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .header-nav a.primary:hover { background: var(--cmds-green-hover); opacity: 1; }
+        /* Dark mode: nav primary CTA becomes Pink */
+        [data-theme="dark"] .header-nav a.primary { background: var(--cmds-pink, #E985A2); color: #0b0f0d; }
+        [data-theme="dark"] .header-nav a.primary:hover { background: var(--cmds-pink-dark, #D16C8A); color: #0b0f0d; }
+
+        .header-actions { display: flex; gap: 6px; }
+        .icon-btn {
+            width: 36px; height: 36px;
+            display: grid; place-items: center;
+            border: none; background: transparent;
+            color: var(--fg-muted);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background .15s;
+        }
+        .icon-btn:hover { background: var(--bg-subtle); color: var(--fg); }
+        .icon-btn svg { width: 16px; height: 16px; }
+
+        /* ═══════════════ HERO ═══════════════ */
+        .hero {
+            position: relative;
+            padding: calc(var(--header-h) + 80px) var(--section-px) 120px;
+            overflow: hidden;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: -20%; left: 50%;
+            width: 1400px; height: 1400px;
+            transform: translateX(-50%);
+            background: radial-gradient(circle at center,
+                color-mix(in srgb, var(--cmds-green) 12%, transparent) 0%,
+                transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        [data-theme="dark"] .hero-bg {
+            background: radial-gradient(circle at center,
+                color-mix(in srgb, var(--accent) 15%, transparent) 0%,
+                transparent 55%);
+        }
+
+        .hero-inner {
+            position: relative;
+            max-width: var(--max-w);
+            margin: 0 auto;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: -0.005em;
+            color: var(--cmds-green);
+            padding: 6px 14px;
+            background: var(--accent-soft);
+            border-radius: 999px;
+            margin-bottom: 32px;
+            border: 1px solid color-mix(in srgb, var(--cmds-green) 15%, transparent);
+        }
+        [data-theme="dark"] .hero-eyebrow { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+        .hero-eyebrow::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--cmds-green);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--cmds-green) 25%, transparent);
+        }
+        [data-theme="dark"] .hero-eyebrow::before { background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(48px, 8vw, 104px);
+            font-weight: 700;
+            line-height: 1.02;
+            letter-spacing: -0.042em;
+            color: var(--fg);
+            margin-bottom: 36px;
+            max-width: 960px;
+        }
+        .hero-title .grad {
+            background: linear-gradient(135deg, var(--cmds-green) 0%, var(--cmds-green-bright) 50%, var(--cmds-green-glow) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+        [data-theme="dark"] .hero-title .grad {
+            background: linear-gradient(135deg, #F4A4B8 0%, #E985A2 50%, #D16C8A 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-lede {
+            font-size: clamp(19px, 1.8vw, 22px);
+            line-height: 1.5;
+            letter-spacing: -0.015em;
+            color: var(--fg-muted);
+            max-width: 720px;
+            margin-bottom: 48px;
+            font-weight: 400;
+        }
+
+        .hero-cta {
+            display: flex; flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 24px;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: background .15s ease, transform .08s ease, box-shadow .15s ease, border-color .15s ease;
+        }
+        .btn-primary {
+            background: var(--cmds-green);
+            color: #fff;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 2px rgba(19,69,56,0.2), 0 8px 24px -8px rgba(19,69,56,0.3);
+        }
+        .btn-primary:hover { background: var(--cmds-green-hover); color: #fff; opacity: 1; box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 4px rgba(19,69,56,0.25), 0 16px 36px -12px rgba(19,69,56,0.4); }
+        .btn-primary:active { transform: scale(0.985); }
+        /* Dark mode: primary CTA becomes Pink */
+        [data-theme="dark"] .btn-primary {
+            background: var(--cmds-pink, #E985A2);
+            color: #0b0f0d;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 6px rgba(0,0,0,0.4), 0 12px 32px -12px rgba(233,133,162,0.4);
+        }
+        [data-theme="dark"] .btn-primary:hover {
+            background: var(--cmds-pink-dark, #D16C8A);
+            color: #0b0f0d;
+        }
+
+        .btn-secondary {
+            background: var(--bg-elev);
+            color: var(--fg);
+            border-color: var(--border-strong);
+        }
+        .btn-secondary:hover { background: var(--bg-subtle); opacity: 1; border-color: var(--fg-subtle); }
+        .btn-ghost {
+            background: transparent;
+            color: var(--fg-muted);
+            padding: 10px 14px;
+        }
+        .btn-ghost:hover { color: var(--fg); opacity: 1; }
+
+        .hero-meta {
+            margin-top: 72px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 8px 40px;
+            max-width: 760px;
+            padding-top: 28px;
+            border-top: 1px solid var(--border);
+        }
+        .hero-meta-item .val {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.028em;
+            color: var(--fg);
+            line-height: 1;
+        }
+        .hero-meta-item .lbl {
+            font-size: 13px;
+            color: var(--fg-subtle);
+            margin-top: 6px;
+            letter-spacing: -0.005em;
+        }
+
+        /* ═══════════════ SECTIONS ═══════════════ */
+        section.block {
+            padding: clamp(80px, 10vw, 140px) var(--section-px);
+            position: relative;
+        }
+        .block-inner { max-width: var(--max-w); margin: 0 auto; }
+
+        .block-eyebrow {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--cmds-green);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+        [data-theme="dark"] .block-eyebrow { color: var(--accent); }
+
+        .block-title {
+            font-family: var(--font-display);
+            font-size: clamp(36px, 5vw, 60px);
+            font-weight: 700;
+            line-height: 1.08;
+            letter-spacing: -0.032em;
+            color: var(--fg);
+            margin-bottom: 24px;
+            max-width: 800px;
+        }
+        .block-lede {
+            font-size: clamp(17px, 1.4vw, 20px);
+            line-height: 1.55;
+            color: var(--fg-muted);
+            letter-spacing: -0.012em;
+            max-width: 680px;
+        }
+
+        /* ═══════════════ THE IDEA ═══════════════ */
+        .idea {
+            background: var(--bg-subtle);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .idea-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: start;
+        }
+        .idea-quote {
+            font-family: var(--font-display);
+            font-size: clamp(24px, 2.6vw, 36px);
+            line-height: 1.3;
+            font-weight: 500;
+            letter-spacing: -0.022em;
+            color: var(--fg);
+        }
+        .idea-quote span { color: var(--cmds-green); }
+        [data-theme="dark"] .idea-quote span { color: var(--accent); }
+        .idea-body p {
+            font-size: 17px;
+            line-height: 1.7;
+            color: var(--fg-muted);
+            margin-bottom: 1em;
+        }
+        @media (max-width: 820px) {
+            .idea-grid { grid-template-columns: 1fr; gap: 40px; }
+        }
+
+        /* ═══════════════ ARCHITECTURE (5 FILES) ═══════════════ */
+        .files-stack {
+            margin-top: 64px;
+            display: grid;
+            gap: 16px;
+        }
+        .file-row {
+            display: grid;
+            grid-template-columns: 100px 1fr auto;
+            gap: 24px;
+            padding: 28px 32px;
+            background: var(--bg-elev);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            align-items: center;
+            transition: all .2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .file-row:hover {
+            border-color: color-mix(in srgb, var(--cmds-green) 30%, var(--border));
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px -12px rgba(19,69,56,0.15);
+        }
+        [data-theme="dark"] .file-row:hover {
+            border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+            box-shadow: 0 12px 32px -12px rgba(91,199,157,0.2);
+        }
+        .file-precedence {
+            font-family: var(--font-display);
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--cmds-green);
+            letter-spacing: -0.03em;
+            opacity: 0.9;
+        }
+        [data-theme="dark"] .file-precedence { color: var(--accent); }
+        .file-precedence::before {
+            content: 'P';
+            font-size: 12px;
+            font-weight: 500;
+            vertical-align: top;
+            margin-right: 2px;
+            opacity: 0.6;
+        }
+        .file-name {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: var(--fg);
+            margin-bottom: 4px;
+        }
+        .file-name code {
+            font-family: var(--font-mono);
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .file-tag {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--cmds-green);
+            margin-left: 10px;
+            padding: 2px 8px;
+            background: var(--accent-soft);
+            border-radius: 4px;
+            vertical-align: middle;
+        }
+        [data-theme="dark"] .file-tag { color: var(--accent); }
+        .file-desc {
+            font-size: 15px;
+            color: var(--fg-muted);
+            line-height: 1.5;
+            letter-spacing: -0.008em;
+        }
+        .file-audience {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--fg-subtle);
+            text-align: right;
+        }
+        .file-audience::before { content: '→ '; opacity: 0.5; }
+        @media (max-width: 720px) {
+            .file-row { grid-template-columns: 1fr; gap: 8px; padding: 20px; }
+            .file-precedence { font-size: 28px; }
+            .file-audience { text-align: left; }
+        }
+
+        /* ═══════════════ PROCESS (4 STAGES) ═══════════════ */
+        .process-flow {
+            margin-top: 64px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            position: relative;
+        }
+        .process-flow::before {
+            content: '';
+            position: absolute;
+            top: 28px;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: linear-gradient(90deg,
+                var(--cmds-green) 0%,
+                var(--cmds-green-bright) 50%,
+                var(--cmds-green-glow) 100%);
+            opacity: 0.3;
+            z-index: 0;
+        }
+        [data-theme="dark"] .process-flow::before {
+            background: linear-gradient(90deg, var(--accent), #7fd9b2, #a8f0c8);
+            opacity: 0.5;
+        }
+        .process-stage {
+            position: relative;
+            padding: 0 16px;
+            text-align: center;
+        }
+        .stage-dot {
+            width: 56px; height: 56px;
+            margin: 0 auto 20px;
+            background: var(--bg-elev);
+            border: 2px solid var(--cmds-green);
+            border-radius: 50%;
+            display: grid; place-items: center;
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--cmds-green);
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 4px 12px -4px rgba(19,69,56,0.2);
+        }
+        [data-theme="dark"] .stage-dot { color: var(--accent); border-color: var(--accent); box-shadow: 0 4px 12px -4px rgba(91,199,157,0.3); }
+        .stage-name {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.022em;
+            color: var(--fg);
+            margin-bottom: 6px;
+        }
+        .stage-category {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--cmds-green);
+            margin-bottom: 12px;
+        }
+        [data-theme="dark"] .stage-category { color: var(--accent); }
+        .stage-desc {
+            font-size: 14px;
+            color: var(--fg-muted);
+            line-height: 1.5;
+            letter-spacing: -0.005em;
+        }
+        @media (max-width: 820px) {
+            .process-flow { grid-template-columns: 1fr; gap: 40px; }
+            .process-flow::before { display: none; }
+        }
+
+        /* ═══════════════ AUDIENCES ═══════════════ */
+        .audiences {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 56px;
+        }
+        .aud-card {
+            padding: 40px;
+            background: var(--bg-elev);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .aud-card::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 120px; height: 120px;
+            background: radial-gradient(circle at top right,
+                color-mix(in srgb, var(--cmds-green) 20%, transparent),
+                transparent 70%);
+            pointer-events: none;
+        }
+        [data-theme="dark"] .aud-card::before {
+            background: radial-gradient(circle at top right,
+                color-mix(in srgb, var(--accent) 25%, transparent),
+                transparent 70%);
+        }
+        .aud-icon {
+            width: 48px; height: 48px;
+            display: grid; place-items: center;
+            background: var(--accent-soft);
+            border-radius: 12px;
+            color: var(--cmds-green);
+            margin-bottom: 20px;
+        }
+        [data-theme="dark"] .aud-icon { color: var(--accent); }
+        .aud-icon svg { width: 22px; height: 22px; }
+        .aud-title {
+            font-family: var(--font-display);
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin-bottom: 12px;
+        }
+        .aud-desc {
+            color: var(--fg-muted);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 15px;
+        }
+        .aud-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .aud-list li {
+            padding: 8px 0;
+            border-top: 1px solid var(--border);
+            font-size: 14px;
+            color: var(--fg);
+            letter-spacing: -0.005em;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .aud-list li::before {
+            content: '';
+            width: 5px; height: 5px;
+            background: var(--cmds-green);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        [data-theme="dark"] .aud-list li::before { background: var(--accent); }
+        .aud-list li code { font-size: 12.5px; color: var(--fg-muted); margin-left: auto; }
+        @media (max-width: 820px) {
+            .audiences { grid-template-columns: 1fr; }
+        }
+
+        /* ═══════════════ CMDS CATEGORIES ═══════════════ */
+        .cat-grid {
+            margin-top: 56px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .cat-cell {
+            padding: 24px 28px;
+            background: var(--bg-elev);
+            transition: background .2s;
+        }
+        .cat-cell:hover { background: var(--bg-subtle); }
+        .cat-num {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--cmds-green);
+            letter-spacing: -0.025em;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        [data-theme="dark"] .cat-num { color: var(--accent); }
+        .cat-name {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 17px;
+            letter-spacing: -0.018em;
+            color: var(--fg);
+            margin-bottom: 4px;
+        }
+        .cat-sub {
+            font-size: 13px;
+            color: var(--fg-subtle);
+            letter-spacing: -0.005em;
+        }
+
+        /* ═══════════════ CODE TEASER ═══════════════ */
+        .teaser-box {
+            margin-top: 56px;
+            background: #0a0d0b;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid color-mix(in srgb, #0a0d0b 50%, var(--border));
+            box-shadow: 0 24px 48px -24px rgba(19,69,56,0.3);
+        }
+        .teaser-tabs {
+            display: flex;
+            padding: 12px 16px 0;
+            background: #0a0d0b;
+            border-bottom: 1px solid #1a231f;
+            gap: 4px;
+        }
+        .teaser-tab {
+            padding: 8px 14px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: #9aa39d;
+            background: transparent;
+            border: none;
+            border-radius: 6px 6px 0 0;
+            cursor: pointer;
+            letter-spacing: -0.005em;
+        }
+        .teaser-tab.active { color: #fff; background: #13181580; border: 1px solid #1a231f; border-bottom: 1px solid #13181580; margin-bottom: -1px; }
+        .teaser-code {
+            padding: 24px 28px;
+            font-family: var(--font-mono);
+            font-size: 13.5px;
+            line-height: 1.7;
+            color: #dfe5e2;
+            overflow-x: auto;
+        }
+        .teaser-code .yaml-key { color: #5bc79d; }
+        .teaser-code .yaml-str { color: #d9c7a0; }
+        .teaser-code .yaml-com { color: #626a66; font-style: italic; }
+        .teaser-code .yaml-sep { color: #626a66; }
+
+        /* ═══════════════ CTA ═══════════════ */
+        .cta-block {
+            background: linear-gradient(135deg, var(--cmds-green) 0%, var(--cmds-green-hover) 60%, var(--cmds-green-bright) 100%);
+            color: #fff;
+            text-align: center;
+            padding: clamp(72px, 10vw, 120px) var(--section-px);
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-block::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 50%),
+                        radial-gradient(circle at 70% 70%, rgba(47,180,136,0.15), transparent 50%);
+        }
+        /* Dark mode: CTA block becomes Pink gradient */
+        [data-theme="dark"] .cta-block {
+            background: linear-gradient(135deg, var(--cmds-pink) 0%, var(--cmds-pink-dark) 55%, #B8577A 100%);
+            color: #0b0f0d;
+        }
+        [data-theme="dark"] .cta-block::before {
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.12), transparent 50%),
+                        radial-gradient(circle at 70% 70%, rgba(209,108,138,0.2), transparent 50%);
+        }
+        .cta-inner { position: relative; max-width: 720px; margin: 0 auto; }
+        .cta-title {
+            font-family: var(--font-display);
+            font-size: clamp(40px, 5vw, 56px);
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.032em;
+            margin-bottom: 20px;
+        }
+        .cta-lede {
+            font-size: 19px;
+            opacity: 0.85;
+            margin-bottom: 40px;
+            line-height: 1.5;
+            letter-spacing: -0.012em;
+        }
+        .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .btn-white {
+            background: #fff; color: var(--cmds-green);
+            padding: 14px 28px;
+            border-radius: 999px;
+            font-size: 15px; font-weight: 600;
+            letter-spacing: -0.01em;
+            display: inline-flex; align-items: center; gap: 8px;
+            transition: transform .08s, box-shadow .15s;
+        }
+        .btn-white:hover { opacity: 1; transform: translateY(-1px); box-shadow: 0 8px 24px -8px rgba(0,0,0,0.3); }
+        /* Dark mode: white button stays white but text uses a dark accent instead of green */
+        [data-theme="dark"] .btn-white { color: var(--cmds-pink-dark); }
+        [data-theme="dark"] .btn-white:hover { color: var(--cmds-pink-dark); opacity: 1; }
+
+        .btn-outline {
+            background: transparent; color: #fff;
+            padding: 14px 28px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 999px;
+            font-size: 15px; font-weight: 500;
+            letter-spacing: -0.01em;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); color: #fff; opacity: 1; }
+        /* Dark mode on pink bg — outline darker for visibility */
+        [data-theme="dark"] .btn-outline { color: #0b0f0d; border-color: rgba(11,15,13,0.35); }
+        [data-theme="dark"] .btn-outline:hover { background: rgba(11,15,13,0.08); color: #0b0f0d; }
+
+        /* ═══════════════ BRAND LOCKUP (sign-off) ═══════════════ */
+        .brand-lockup {
+            padding: clamp(64px, 8vw, 96px) var(--section-px);
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+        }
+        .brand-lockup-inner {
+            max-width: 640px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .lockup-img {
+            max-width: 320px;
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        /* Default: show light (black) logo. Dark mode: swap */
+        .lockup-dark { display: none; }
+        [data-theme="dark"] .lockup-light { display: none; }
+        [data-theme="dark"] .lockup-dark { display: block; }
+        .lockup-tagline {
+            margin-top: 24px;
+            font-family: var(--font-display);
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            color: var(--fg-subtle);
+        }
+        @media (max-width: 640px) {
+            .lockup-img { max-width: 260px; }
+        }
+
+        /* ═══════════════ FOOTER ═══════════════ */
+        .footer {
+            padding: 56px var(--section-px) 48px;
+            border-top: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--fg-muted);
+            font-size: 13.5px;
+        }
+        .footer-inner {
+            max-width: var(--max-w);
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .footer-inner a { color: var(--fg-muted); }
+        .footer-inner a:hover { color: var(--fg); opacity: 1; }
+        .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+
+        /* ═══════════════ REVEAL ANIM ═══════════════ */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity .7s ease, transform .7s cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1; transform: none; transition: none; }
+        }
+
+        @media (max-width: 720px) {
+            .header-nav a:not(.primary) { display: none; }
+            .hero-meta-item .val { font-size: 26px; }
+        }
+
+        /* ═══════════════ SHOWCASE (real app shots) ═══════════════ */
+        .shot-frame {
+            margin-top: 40px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 30px 80px -30px color-mix(in srgb, var(--fg) 30%, transparent);
+            background: var(--bg-subtle);
+        }
+        .shot-frame img { display: block; width: 100%; height: auto; }
+        .shot-grid {
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        .shot-card {
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--bg-elev);
+            box-shadow: 0 18px 50px -28px color-mix(in srgb, var(--fg) 30%, transparent);
+        }
+        .shot-card img { display: block; width: 100%; height: auto; }
+        .shot-cap {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--fg-muted);
+            border-top: 1px solid var(--border);
+        }
+        .shot-cap .pill {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+        @media (max-width: 720px) { .shot-grid { grid-template-columns: 1fr; } }
+
+        /* feature grid reuse: tighten cat-grid to 3 cols for features */
+        .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-top: 40px; }
+        .feat-cell { background: var(--bg-elev); padding: 26px 24px; }
+        .feat-ic { width: 26px; height: 26px; color: var(--accent); margin-bottom: 14px; }
+        .feat-h { font-size: 16px; font-weight: 650; letter-spacing: -0.02em; margin-bottom: 6px; }
+        .feat-p { font-size: 13.5px; color: var(--fg-muted); line-height: 1.5; }
+        .feat-p code { background: var(--bg-subtle); padding: 1px 5px; border-radius: 4px; font-size: 0.92em; }
+        @media (max-width: 900px) { .feat-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .feat-grid { grid-template-columns: 1fr; } }
+
+        /* keyboard shortcut chips */
+        kbd {
+            font-family: var(--font-mono); font-size: 12px;
+            padding: 2px 7px; border-radius: 6px;
+            background: var(--bg-subtle); border: 1px solid var(--border-strong);
+            box-shadow: 0 1px 0 var(--border-strong);
+            color: var(--fg); white-space: nowrap;
+        }
+        .kbd-grid { margin-top: 36px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+        .kbd-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+        .kbd-row:nth-child(odd) { border-right: 1px solid var(--border); }
+        .kbd-row .label { font-size: 14px; color: var(--fg-muted); }
+        @media (max-width: 640px) { .kbd-grid { grid-template-columns: 1fr; } .kbd-row:nth-child(odd) { border-right: none; } }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+    <a class="brand" href="/">
+        <img class="brand-mark" src="/assets/logos/cmds-logo-round.png" alt="CMDS" width="28" height="28">
+        <span>CmdMD</span>
+    </a>
+    <nav class="header-nav">
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#shots">Screenshots</a>
+        <a href="https://github.com/johnfkoo951/CmdMD" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/johnfkoo951/CmdMD/releases/latest" class="primary" data-i18n="nav.readdocs">Download →</a>
+    </nav>
+    <div class="header-actions">
+        <button class="icon-btn" id="langToggle" aria-label="Toggle language">
+            <span id="langLabel" style="font-size: 12px; font-weight: 500;">한</span>
+        </button>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">
+            <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+    </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-inner">
+        <div class="hero-eyebrow">
+            <span class="en-only">Native macOS · SwiftUI · v1.4.6</span>
+            <span class="ko-only">네이티브 macOS · SwiftUI · v1.4.6</span>
+        </div>
+        <h1 class="hero-title">
+            <span class="en-only">Read your Markdown.<br>Then <span class="grad">route it home</span>.</span>
+            <span class="ko-only">먼저 읽고,<br>그 다음 <span class="grad">제자리로 보낸다</span>.</span>
+        </h1>
+        <p class="hero-lede">
+            <span class="en-only">CmdMD is a review-first Markdown editor and Obsidian vault router for macOS. It opens straight into a beautiful rendered preview — editing is one keystroke away — then files any note into the right vault folder with templates and routing rules.</span>
+            <span class="ko-only">CmdMD는 macOS용 리뷰 우선(review-first) 마크다운 에디터이자 Obsidian 볼트 라우터입니다. 열면 곧바로 렌더된 프리뷰로 시작하고 — 편집은 단축키 하나 — 어떤 노트든 템플릿과 라우팅 규칙으로 알맞은 볼트 폴더에 보냅니다.</span>
+        </p>
+        <div class="hero-cta">
+            <a class="btn btn-primary" href="https://github.com/johnfkoo951/CmdMD/releases/latest">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span class="en-only">Download for macOS</span><span class="ko-only">macOS용 다운로드</span>
+            </a>
+            <a class="btn btn-secondary" href="#how">
+                <span class="en-only">How it works</span><span class="ko-only">사용법 보기</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+            <a class="btn btn-ghost" href="https://github.com/johnfkoo951/CmdMD" target="_blank" rel="noopener">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2 0 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.2.8.8 1.3 1.9 1.3 3.1 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.1.9 2.3v3.3c0 .3.1.7.8.6A12 12 0 0 0 12 .3"/></svg>
+                GitHub
+            </a>
+        </div>
+
+        <div class="hero-meta">
+            <div class="hero-meta-item"><div class="val">7</div><div class="lbl en-only">preview themes</div><div class="lbl ko-only">프리뷰 테마</div></div>
+            <div class="hero-meta-item"><div class="val">∞</div><div class="lbl en-only">Obsidian vaults</div><div class="lbl ko-only">Obsidian 볼트</div></div>
+            <div class="hero-meta-item"><div class="val">macOS 14+</div><div class="lbl en-only">native Swift</div><div class="lbl ko-only">네이티브 Swift</div></div>
+            <div class="hero-meta-item"><div class="val">⇧⌘T</div><div class="lbl en-only">send to vault</div><div class="lbl ko-only">볼트로 보내기</div></div>
+        </div>
+
+        <div class="shot-frame reveal">
+            <img src="/assets/shots/hero.png" alt="CmdMD in CMDS Light and Dark themes — rendered Markdown preview" loading="eager" width="2890" height="1111">
+        </div>
+    </div>
+</section>
+
+<!-- THE IDEA -->
+<section class="block idea reveal">
+    <div class="block-inner">
+        <div class="idea-grid">
+            <div>
+                <div class="block-eyebrow en-only">The Idea</div>
+                <div class="block-eyebrow ko-only">핵심 아이디어</div>
+                <h2 class="idea-quote">
+                    <span class="en-only">Most Markdown apps open into an editor. CmdMD opens into a <span>rendered preview</span> — like reviewing a pull request, not writing one.</span>
+                    <span class="ko-only">대부분의 마크다운 앱은 에디터로 열린다. CmdMD는 <span>렌더된 프리뷰</span>로 열린다 — 글을 쓰는 게 아니라, PR을 리뷰하듯이.</span>
+                </h2>
+            </div>
+            <div class="idea-body">
+                <p class="en-only">Reading comes first; editing is one keystroke away. <kbd>⌘1</kbd> <kbd>⌘2</kbd> <kbd>⌘3</kbd> flip between Source, Split, and Preview — so you decide when a note becomes a draft.</p>
+                <p class="en-only">It speaks Obsidian-flavored Markdown — <code>[[wiki-links]]</code>, <code>#tags</code>, <code>&gt; [!callouts]</code>, <code>==highlights==</code> — and doubles as a <em>router</em>: capture or open a note, then file it into the correct vault folder with templates and rules.</p>
+                <p class="ko-only">읽기가 먼저고, 편집은 단축키 하나 거리입니다. <kbd>⌘1</kbd> <kbd>⌘2</kbd> <kbd>⌘3</kbd> 로 소스 · 분할 · 프리뷰를 오가며, 노트를 언제 초안으로 바꿀지 직접 정합니다.</p>
+                <p class="ko-only">Obsidian 확장 문법 — <code>[[wiki-links]]</code>, <code>#tags</code>, <code>&gt; [!callouts]</code>, <code>==highlights==</code> — 을 그대로 이해하고, <em>라우터</em>로도 동작합니다: 노트를 포착하거나 열어, 템플릿과 규칙으로 알맞은 볼트 폴더에 보냅니다.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="block" id="features">
+    <div class="block-inner reveal">
+        <div class="block-eyebrow">
+            <span class="en-only">Features</span>
+            <span class="ko-only">기능</span>
+        </div>
+        <h2 class="block-title">
+            <span class="en-only">Everything a <span class="accent-word">reader-editor</span> needs.</span>
+            <span class="ko-only">읽고 다루는 데 필요한 <span class="accent-word">모든 것</span>.</span>
+        </h2>
+        <p class="block-lede">
+            <span class="en-only">Full GitHub-Flavored + Obsidian Markdown, diagrams and math, a vault router, fuzzy search, and a command palette — all native, all fast.</span>
+            <span class="ko-only">완전한 GitHub-Flavored + Obsidian 마크다운, 다이어그램과 수식, 볼트 라우터, 퍼지 검색, 커맨드 팔레트 — 전부 네이티브, 전부 빠르게.</span>
+        </p>
+
+        <div class="feat-grid">
+            <div class="feat-cell">
+                <svg class="feat-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                <div class="feat-h en-only">Review-first preview</div><div class="feat-h ko-only">리뷰 우선 프리뷰</div>
+                <p class="feat-p en-only">Launches into a rendered preview. <code>⌘1</code>/<code>⌘2</code>/<code>⌘3</code> flips Source / Split / Preview, with scroll-synced split.</p>
+                <p class="feat-p ko-only">렌더된 프리뷰로 시작. <code>⌘1</code>/<code>⌘2</code>/<code>⌘3</code> 로 소스 / 분할 / 프리뷰 전환, 분할 스크롤 동기화.</p>
+            </div>
+            <div class="feat-cell">
+                <svg class="feat-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                <div class="feat-h en-only">Obsidian-flavored</div><div class="feat-h ko-only">Obsidian 문법</div>
+                <p class="feat-p en-only">GitHub-Flavored tables &amp; task lists, plus <code>[[wiki-links]]</code>, <code>#tags</code>, <code>[!callouts]</code> and <code>==highlights==</code>.</p>
+                <p class="feat-p ko-only">GFM 테이블·태스크 리스트에 더해 <code>[[wiki-links]]</code>, <code>#tags</code>, <code>[!callouts]</code>, <code>==highlights==</code>.</p>
+            </div>
+            <div class="feat-cell">
+                <svg class="feat-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M3 12h3M18 12h3M12 3v3M12 18v3"/></svg>
+                <div class="feat-h en-only">Mermaid + KaTeX</div><div class="feat-h ko-only">Mermaid + KaTeX</div>
+                <p class="feat-p en-only">Mermaid 11 diagrams and KaTeX math (<code>$…$</code>, <code>$$…$$</code>) with <code>\ce{}</code> chemistry, rendered live.</p>
+                <p class="feat-p ko-only">Mermaid 11 다이어그램과 KaTeX 수식(<code>$…$</code>, <code>$$…$$</code>), <code>\ce{}</code> 화학식까지 실시간 렌더.</p>
+            </div>
+            <div class="feat-cell">
+                <svg class="feat-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                <div class="feat-h en-only">Obsidian vault router</div><div class="feat-h ko-only">Obsidian 볼트 라우터</div>
+                <p class="feat-p en-only">Auto-detects installed vaults. Send notes to any folder with templates and routing rules — by tag, filename, or content.</p>
+                <p class="feat-p ko-only">설치된 볼트를 자동 감지. 템플릿과 라우팅 규칙(태그·파일명·내용)으로 어떤 폴더로든 노트를 보냅니다.</p>
+            </div>
+            <div class="feat-cell">
+                <svg class="feat-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <div class="feat-h en-only">Omnisearch &amp; palette</div><div class="feat-h ko-only">옴니서치 &amp; 팔레트</div>
+                <p class="feat-p en-only">Fuzzy file-name + debounced content search (<code>⇧⌘O</code>), and a command palette (<code>⌘K</code>) for every action.</p>
+                <p class="feat-p ko-only">퍼지 파일명 + 디바운스 내용 검색(<code>⇧⌘O</code>), 모든 동작을 위한 커맨드 팔레트(<code>⌘K</code>).</p>
+            </div>
+            <div class="feat-cell">
+                <svg class="feat-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                <div class="feat-h en-only">Tabs, drafts &amp; export</div><div class="feat-h ko-only">탭 · 드래프트 · 내보내기</div>
+                <p class="feat-p en-only">Tabs, local drafts, Quick Capture (menu bar + global hotkey), a frontmatter inspector, slug-accurate TOC, and HTML / PDF export.</p>
+                <p class="feat-p ko-only">탭, 로컬 드래프트, 퀵 캡처(메뉴바 + 전역 단축키), frontmatter 인스펙터, 슬러그 정확 TOC, HTML / PDF 내보내기.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="block idea" id="how">
+    <div class="block-inner reveal">
+        <div class="block-eyebrow">
+            <span class="en-only">How it works</span>
+            <span class="ko-only">사용법</span>
+        </div>
+        <h2 class="block-title">
+            <span class="en-only">Open, read, route — <span class="accent-word">one keystroke each.</span></span>
+            <span class="ko-only">열고, 읽고, 보낸다 — <span class="accent-word">각각 단축키 하나.</span></span>
+        </h2>
+        <p class="block-lede">
+            <span class="en-only">No setup ritual. Point CmdMD at a folder or an Obsidian vault and it just reads — then routing turns reading into filing.</span>
+            <span class="ko-only">거창한 설정 없이, 폴더나 Obsidian 볼트를 가리키면 곧바로 읽기 시작합니다 — 그리고 라우팅이 읽기를 정리로 바꿉니다.</span>
+        </p>
+
+        <div class="process-flow">
+            <div class="process-stage">
+                <div class="stage-dot">1</div>
+                <div class="stage-name en-only">Open a folder</div><div class="stage-name ko-only">폴더 열기</div>
+                <div class="stage-category"><kbd>⌥⌘O</kbd> · or a file <kbd>⌘O</kbd></div>
+                <div class="stage-desc en-only">Open any folder or Obsidian vault. The sidebar shows your tree; tabs hold what you're reading.</div>
+                <div class="stage-desc ko-only">아무 폴더나 Obsidian 볼트를 엽니다. 사이드바에 트리가, 탭에 읽는 노트가 담깁니다.</div>
+            </div>
+            <div class="process-stage">
+                <div class="stage-dot">2</div>
+                <div class="stage-name en-only">Read it beautifully</div><div class="stage-name ko-only">아름답게 읽기</div>
+                <div class="stage-category"><kbd>⌘1</kbd> <kbd>⌘2</kbd> <kbd>⌘3</kbd></div>
+                <div class="stage-desc en-only">Land in rendered preview. Flip to Split or Source when a note becomes a draft; pick from 7 themes.</div>
+                <div class="stage-desc ko-only">렌더 프리뷰로 시작. 초안이 되면 분할·소스로 전환하고, 7개 테마 중에서 고릅니다.</div>
+            </div>
+            <div class="process-stage">
+                <div class="stage-dot">3</div>
+                <div class="stage-name en-only">Route to a vault</div><div class="stage-name ko-only">볼트로 라우팅</div>
+                <div class="stage-category"><kbd>⇧⌘T</kbd> · auto <kbd>⌃⌘T</kbd></div>
+                <div class="stage-desc en-only">Send the note to the right folder with a template applied, or let routing rules pick the destination by tag / name / content.</div>
+                <div class="stage-desc ko-only">템플릿을 적용해 알맞은 폴더로 보내거나, 라우팅 규칙(태그·이름·내용)이 목적지를 자동으로 고르게 합니다.</div>
+            </div>
+            <div class="process-stage">
+                <div class="stage-dot">4</div>
+                <div class="stage-name en-only">Capture anytime</div><div class="stage-name ko-only">언제든 캡처</div>
+                <div class="stage-category"><kbd>⇧⌘M</kbd> Quick Capture</div>
+                <div class="stage-desc en-only">A menu-bar + global-hotkey capture sheet drops a thought straight into your inbox — or auto-routes it.</div>
+                <div class="stage-desc ko-only">메뉴바 + 전역 단축키 캡처 시트로 떠오른 생각을 인박스에 바로 — 또는 자동 라우팅으로 — 떨굽니다.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SCREENSHOTS -->
+<section class="block reveal" id="shots">
+    <div class="block-inner">
+        <div class="block-eyebrow">
+            <span class="en-only">Screenshots</span>
+            <span class="ko-only">스크린샷</span>
+        </div>
+        <h2 class="block-title">
+            <span class="en-only">The accent follows your <span class="accent-word">appearance</span>.</span>
+            <span class="ko-only">액센트는 시스템 <span class="accent-word">외형</span>을 따라갑니다.</span>
+        </h2>
+        <p class="block-lede">
+            <span class="en-only">CMDS Green in light, CMDS Pink in dark. Real captures of CmdMD — preview and source-plus-preview split, in both themes.</span>
+            <span class="ko-only">라이트는 CMDS 그린, 다크는 CMDS 핑크. 실제 CmdMD 화면 — 두 테마의 프리뷰와 소스+프리뷰 분할.</span>
+        </p>
+
+        <div class="shot-grid">
+            <div class="shot-card">
+                <img src="/assets/shots/cmds-light-preview.png" alt="CmdMD light preview" loading="lazy" width="2320" height="1640">
+                <div class="shot-cap"><span class="en-only">Preview — Light</span><span class="ko-only">프리뷰 — 라이트</span><span class="pill">⌘3</span></div>
+            </div>
+            <div class="shot-card">
+                <img src="/assets/shots/cmds-dark-preview.png" alt="CmdMD dark preview" loading="lazy" width="2320" height="1640">
+                <div class="shot-cap"><span class="en-only">Preview — Dark</span><span class="ko-only">프리뷰 — 다크</span><span class="pill">⌘3</span></div>
+            </div>
+            <div class="shot-card">
+                <img src="/assets/shots/cmds-light-split.png" alt="CmdMD light split source and preview" loading="lazy" width="2320" height="1640">
+                <div class="shot-cap"><span class="en-only">Split — Light</span><span class="ko-only">분할 — 라이트</span><span class="pill">⌘2</span></div>
+            </div>
+            <div class="shot-card">
+                <img src="/assets/shots/cmds-dark-split.png" alt="CmdMD dark split source and preview" loading="lazy" width="2320" height="1640">
+                <div class="shot-cap"><span class="en-only">Split — Dark</span><span class="ko-only">분할 — 다크</span><span class="pill">⌘2</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SHORTCUTS -->
+<section class="block reveal" style="padding-top: 0;">
+    <div class="block-inner">
+        <div class="block-eyebrow">
+            <span class="en-only">Keyboard shortcuts</span>
+            <span class="ko-only">키보드 단축키</span>
+        </div>
+        <h2 class="block-title">
+            <span class="en-only">Hands stay on the <span class="accent-word">keyboard</span>.</span>
+            <span class="ko-only">손은 <span class="accent-word">키보드</span> 위에.</span>
+        </h2>
+        <p class="block-lede">
+            <span class="en-only">Defaults mirror common Obsidian bindings — and every action is remappable in Settings → Shortcuts.</span>
+            <span class="ko-only">기본값은 익숙한 Obsidian 바인딩을 따르고 — 모든 동작은 Settings → Shortcuts 에서 재지정할 수 있습니다.</span>
+        </p>
+
+        <div class="kbd-grid">
+            <div class="kbd-row"><span class="label en-only">Command palette</span><span class="label ko-only">커맨드 팔레트</span><kbd>⌘K</kbd></div>
+            <div class="kbd-row"><span class="label en-only">Send to vault</span><span class="label ko-only">볼트로 보내기</span><kbd>⇧⌘T</kbd></div>
+            <div class="kbd-row"><span class="label en-only">Omnisearch</span><span class="label ko-only">옴니서치</span><kbd>⇧⌘O</kbd></div>
+            <div class="kbd-row"><span class="label en-only">Auto-route send</span><span class="label ko-only">자동 라우팅 전송</span><kbd>⌃⌘T</kbd></div>
+            <div class="kbd-row"><span class="label en-only">Source / Split / Preview</span><span class="label ko-only">소스 / 분할 / 프리뷰</span><span><kbd>⌘1</kbd> <kbd>⌘2</kbd> <kbd>⌘3</kbd></span></div>
+            <div class="kbd-row"><span class="label en-only">Quick capture</span><span class="label ko-only">퀵 캡처</span><kbd>⇧⌘M</kbd></div>
+            <div class="kbd-row"><span class="label en-only">Open folder / file</span><span class="label ko-only">폴더 / 파일 열기</span><span><kbd>⌥⌘O</kbd> <kbd>⌘O</kbd></span></div>
+            <div class="kbd-row"><span class="label en-only">Toggle inspector</span><span class="label ko-only">인스펙터 토글</span><kbd>⌥⌘I</kbd></div>
+            <div class="kbd-row"><span class="label en-only">Find in folder</span><span class="label ko-only">폴더에서 찾기</span><kbd>⇧⌘F</kbd></div>
+            <div class="kbd-row"><span class="label en-only">New draft</span><span class="label ko-only">새 드래프트</span><kbd>⌘N</kbd></div>
+        </div>
+    </div>
+</section>
+
+<!-- INSTALL -->
+<section class="block reveal" id="install" style="padding-top: 0;">
+    <div class="block-inner">
+        <div class="block-eyebrow">
+            <span class="en-only">Install</span>
+            <span class="ko-only">설치</span>
+        </div>
+        <h2 class="block-title">
+            <span class="en-only">Drag to <span class="accent-word">Applications</span>. Done.</span>
+            <span class="ko-only"><span class="accent-word">Applications</span>로 드래그. 끝.</span>
+        </h2>
+        <p class="block-lede">
+            <span class="en-only">Grab the <code>.dmg</code> from Releases, drag <code>CmdMD.app</code> onto the Applications shortcut. It's ad-hoc signed, so on first launch right-click → Open, or clear the quarantine flag below.</span>
+            <span class="ko-only">Releases에서 <code>.dmg</code>를 받아 <code>CmdMD.app</code>을 Applications 단축아이콘에 드래그하세요. ad-hoc 서명이라 첫 실행 시 우클릭 → 열기 하거나, 아래 명령으로 격리 플래그를 해제합니다.</span>
+        </p>
+
+        <div class="shot-frame reveal" style="margin-top: 32px; max-width: 760px;">
+            <img src="/assets/shots/demo.gif" alt="CmdMD cycling preview, split, dark theme and command palette" loading="lazy" width="1180" height="834">
+        </div>
+
+        <div class="teaser-box" style="margin-top: 32px;">
+            <div class="teaser-tabs">
+                <button class="teaser-tab active">⌘ Terminal — clear Gatekeeper quarantine</button>
+            </div>
+            <div class="teaser-code"><span class="yaml-com"># right-click → Open also works — this just skips the prompt</span>
+xattr -dr com.apple.quarantine /Applications/CmdMD.app</div>
+        </div>
+
+        <p class="block-lede" style="margin-top: 28px;">
+            <span class="en-only">Prefer to build it yourself? <code>swift build -c release</code> on macOS 14+ with Xcode 15. Full instructions are in the README.</span>
+            <span class="ko-only">직접 빌드하고 싶다면? macOS 14+ · Xcode 15 환경에서 <code>swift build -c release</code>. 자세한 방법은 README에 있습니다.</span>
+        </p>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-block">
+    <div class="cta-inner">
+        <h2 class="cta-title">
+            <span class="en-only">Read first.<br>Route everything.</span>
+            <span class="ko-only">먼저 읽고,<br>전부 제자리로.</span>
+        </h2>
+        <p class="cta-lede">
+            <span class="en-only">A native macOS Markdown reader that files itself away. Free and open source.</span>
+            <span class="ko-only">스스로 정리되는 네이티브 macOS 마크다운 리더. 무료, 오픈소스.</span>
+        </p>
+        <div class="cta-buttons">
+            <a class="btn-white" href="https://github.com/johnfkoo951/CmdMD/releases/latest">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span class="en-only">Download for macOS</span><span class="ko-only">macOS용 다운로드</span>
+            </a>
+            <a class="btn-outline" href="https://github.com/johnfkoo951/CmdMD" target="_blank" rel="noopener">GitHub ↗</a>
+        </div>
+    </div>
+</section>
+
+<!-- BRAND LOCKUP (sign-off) -->
+<section class="brand-lockup reveal">
+    <div class="brand-lockup-inner">
+        <img class="lockup-img lockup-light" src="/assets/logos/cmds-logo-typo-black.png" alt="CMDSPACE" loading="lazy">
+        <img class="lockup-img lockup-dark" src="/assets/logos/cmds-logo-typo-white.png" alt="CMDSPACE" loading="lazy">
+        <p class="lockup-tagline">
+            <span class="en-only">Command your space.</span>
+            <span class="ko-only">당신의 공간을 지휘하세요.</span>
+        </p>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-inner">
+        <div>© 2026 CMDSPACE · Yohan Koo</div>
+        <div class="footer-links">
+            <a href="https://github.com/johnfkoo951/CmdMD" target="_blank" rel="noopener">GitHub</a>
+            <a href="https://github.com/johnfkoo951/CmdMD/releases/latest" target="_blank" rel="noopener">Releases</a>
+            <a href="https://cmdspace.work" target="_blank" rel="noopener">CMDSPACE</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+(function() {
+    'use strict';
+
+    const I18N = {
+        en: { 'nav.readdocs': 'Download →' },
+        ko: { 'nav.readdocs': '다운로드 →' }
+    };
+
+    function applyLang(lang) {
+        document.documentElement.lang = lang;
+        document.documentElement.dataset.lang = lang;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.dataset.i18n;
+            if (I18N[lang][key]) el.textContent = I18N[lang][key];
+        });
+        document.getElementById('langLabel').textContent = lang === 'en' ? '한' : 'EN';
+        localStorage.setItem('cmds-lang', lang);
+    }
+
+    function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('cmds-theme', theme);
+        const icon = document.getElementById('themeIcon');
+        if (theme === 'dark') {
+            icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+        } else {
+            icon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
+        }
+    }
+
+    document.getElementById('langToggle').addEventListener('click', () => {
+        applyLang(document.documentElement.dataset.lang === 'en' ? 'ko' : 'en');
+    });
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+    });
+
+    // Reveal on scroll
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+    }, { rootMargin: '-10% 0px -10% 0px' });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    // ═══ Double-click empty space → toggle scroll to bottom / top ═══
+    document.addEventListener('dblclick', (e) => {
+        // only act on true empty areas — skip if the target is interactive/text content
+        const tag = e.target.tagName;
+        if (['A','BUTTON','INPUT','TEXTAREA','CODE','PRE','IMG','SVG','PATH','SPAN'].includes(tag)) return;
+        // also skip if user has selected text
+        if (window.getSelection().toString().length > 0) return;
+
+        const scrollY = window.scrollY;
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        const mid = max / 2;
+        // in top half → scroll to bottom; in bottom half → scroll to top
+        window.scrollTo({ top: scrollY < mid ? max : 0, behavior: 'smooth' });
+    });
+
+    // Init
+    applyLang(localStorage.getItem('cmds-lang') || 'en');
+    applyTheme(localStorage.getItem('cmds-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+})();
+</script>
+
+</body>
+</html>
